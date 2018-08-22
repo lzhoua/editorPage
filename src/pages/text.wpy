@@ -1,0 +1,41 @@
+<style lang='scss'>
+</style>
+
+<template>
+  <view class=''>
+    <cax id="myCanvas"></cax>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import cax from '../components/cax/index.js'
+export default class text extends wepy.page {
+  config = {
+    navigationBarTitleText: '',
+    usingComponents: {
+      cax: '../components/cax/cax'
+    }
+  }
+  data = {}
+  onLoad () {
+    // 比 web 里使用 cax 多传递 this，this 代表 Page 或 Component 的实例
+    const stage = new cax.Stage(200, 200, 'myCanvas', this.$wxpage)
+    const rect = new cax.Rect(100, 100, {
+      fillStyle: 'black'
+    })
+    rect.originX = 50
+    rect.originY = 50
+    rect.x = 100
+    rect.y = 100
+    rect.rotation = 30
+    rect.on('tap', () => {
+      console.log('tap')
+    })
+    stage.add(rect)
+    stage.update()
+  }
+  methods = {}
+  watch = {}
+}
+</script>

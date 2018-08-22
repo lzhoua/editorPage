@@ -1,0 +1,91 @@
+<style lang='scss'>
+page {
+  background-color: #666666;
+}
+.box {
+  width: 30rpx;
+  height: 30rpx;
+  background-color: #000000;
+  position: absolute;
+}
+.image {
+  opacity: 0.5;
+  position: absolute;
+}
+</style>
+
+<template>
+  <view class='native-rota'>
+    <view class="box"
+      style="top: {{top}}px; left: {{left}}px; transform: translate(-50%, -50%) scale({{ scale }}) rotate({{ rotate }} deg);">
+      <image 
+        class="image"
+        src="{{src}}"
+        catchtouchstart="touchStart"
+        catchtouchend="touchEnd"
+        catchtouchmove="touchMove"
+        style="width: {{width}}rpx; height: {{height}}rpx; left: {{x * (-1)}}px; top: {{y * (-1)}}px;"/>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+let point = []
+export default class nativeRota extends wepy.page {
+  config = {
+    navigationBarTitleText: ''
+  }
+  data = {
+    src: 'http://img05.tooopen.com/images/20150820/tooopen_sy_139205349641.jpg',
+    scale: 1, // 图片缩放比例
+    rotate: 0, // 图片旋转的角度
+    width: 600, // 图片的宽度
+    height: 400, // 图片的高度
+    top: 100,  // 图片距离顶部的距离
+    left: 100, // 图片距离左边的距离
+    x: 100,  // 旋转中心点距离图片顶部的距离
+    y: 100   // 旋转中心点距离图片左边的距离
+  }
+  onLoad () {}
+  methods = {
+    touchStart (e) {
+      point = e.touches
+    },
+    touchEnd (e) {
+      point = e.touches
+    },
+    touchMove (e) {
+      const touch = e.touches
+      if (touch.length < 2 && touch[0].identifier === point[0].identifier) {
+        const diffx = touch[0].pageX - point[0].pageX
+        const diffy = touch[0].pageY - point[0].pageY
+        this.left = this.left + diffx
+        this.top = this.top + diffy
+        point = touch
+      } else {
+        const [...prePoint] = point // 深拷贝一维数组，存储上个触摸点
+        const [preLenX, preLenY, nowLenX, nowLenY] = [ // 计算出每个点
+          prePoint[0].pageX - prePoint[1].pageX,
+          prePoint[0].pageY - prePoint[1].pageY,
+          touch[0].pageX - touch[1].pageX,
+          touch[0].pageY - touch[1].pageY
+        ]
+        point = touch
+        const preAngle = 180 / Math.PI * Math.atan(preLenY / preLenX)
+        const nowAngle = 180 / Math.PI * Math.atan(nowLenY / nowLenX)
+        const angle = Math.abs(nowAngle - preAngle)
+        if (angle > 1 && angle < 30) { // 优先旋转操作，避免过象限时，造成的180度旋转
+          this.rotate = this.rotate + (nowAngle - preAngle)
+        } else { // 缩放拉伸
+          // 计算距离
+          const preDistance = Math.sqrt(Math.pow(preLenX, 2) + Math.pow(preLenY, 2))
+          const nowDistance = Math.sqrt(Math.pow(nowLenX, 2) + Math.pow(nowLenY, 2))
+          this.scale = this.scale + (nowDistance - preDistance) * 0.005
+        }
+      }
+    }
+  }
+  watch = {}
+}
+</script>

@@ -1,0 +1,128 @@
+<style lang='scss'>
+.box {
+  height: 500px;
+  border: thin solid red;
+}
+.image {
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<template>
+  <view class=''>
+    <movable-area class="box" 
+      style="{{'width: ' + width + 'px'}}"
+      bindtouchstart="onStart"
+      bindtouchend="onEnd"
+      bindtouchmove="onMove"
+      scale-area>
+      <movable-view style="height: 150px; width: 150px; background: blue;" 
+        direction="all"
+        bindchange="onChange"
+        bindscale="onScale"
+        scale scale-min="0.5"
+        x="150"
+        y="150"
+        scale-max="3"
+        scale-value="0.5">
+        <image style="{{'transform:rotate(' + deg + 'deg);'}}" class="image" src="../mixins/FkUkxY-FcD5zpIyLSFyRhixazQL693275.jpg"/>
+      </movable-view>
+    </movable-area>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class index extends wepy.page {
+  config = {
+    navigationBarTitleText: '',
+    'disableScroll': true
+  }
+  data = {
+    cache: [],
+    width: 0,
+    scale: 1,
+    center: {x: 225, y: 225},
+    deg: 0,
+    timeStatus: false,
+    Timer: 0
+  }
+  onLoad () {
+    this.width = wepy.getSystemInfoSync().windowWidth - 3
+  }
+  methods = {
+    onStart (e) {
+      this.cache.push(e.changedTouches[0])
+      if (this.timeStatus === false) {
+        this.Timer = setTimeout(() => {
+          this.timeStatus = true
+        }, 500)
+      }
+    },
+    onEnd (e) {
+      let identifier = e.changedTouches[0].identifier
+      this.cache.map((item, index) => {
+        if (item.identifier === identifier) {
+          this.cache.splice(index, 1) // 清除对应 identifier 触摸点的坐标
+        }
+      })
+      this.timeStatus = false // 将旋转状态置为 false
+    },
+    onMove (e) {
+      if (e.changedTouches.length === 2 && this.timeStatus) { // 触摸点在两个时，才执行旋转
+        this.cache.map((cache) => {
+          e.changedTouches.map((item, index) => {
+            if (cache.identifier === item.identifier) { // 根据 identifier 对应触摸点
+              this.rotating(cache, item)
+            }
+          })
+        })
+        this.cache = e.changedTouches // 存入此次移动点坐标，作为下次角度计算的 “上一个移动点”
+      }
+    },
+    onChange (e) {
+      if (!this.changeStatus) {
+        this.changeStatus = true
+        setTimeout(() => {
+          this.center = { // 设置图片的中心点
+            x: e.detail.x + 75 * this.scale,
+            y: e.detail.y + 75 * this.scale
+          }
+          this.changeStatus = false
+        }, 10)
+      }
+    },
+    onScale (e) {
+      clearTimeout(this.Timer)  // 清除触摸时设置的定时器
+      this.scale = e.detail.scale  // 保存此次缩放比例
+      if (!this.timeStatus) {
+        setTimeout(() => {
+          this.timeStatus = true // 设置缩放的时候，需要1s左右才能旋转，避免缩放和旋转冲突
+        }, 1000)
+      }
+    }
+  }
+  rotating (cache, move) {
+    const center = this.center  // 中心点坐标
+    const cacheLenX = cache.pageX - center.x // 上一个移动点 距离中心坐标 X 轴的距离
+    const cacheLenY = cache.pageY - center.y // 上一个移动点 距离中心坐标 Y 轴的距离
+    const moveLenX = move.pageX - center.x //  获得 移动点 距离中心坐标 X 轴的距离
+    const moveLenY = move.pageY - center.y // 获得 移动点 距离中心坐标 Y 轴的距离
+    const roteCache = 180 / Math.PI * Math.atan(Math.abs(cacheLenY / cacheLenX)) // 利用反三角函数算出上次移动点的角度
+    const roteMove = 180 / Math.PI * Math.atan(Math.abs(moveLenY / moveLenX)) // 利用反三角函数算出移动点角度
+    /*
+    *  角度规律：
+    *   旋转角度为（上一个角度 与 移动位置角度 之差的绝对值）
+    *     （一，三象限），上 > 移 则角度增加， 开 < 移 角度减小
+    *     （二，四象限），上 > 移 则角度减小，开 < 移 角度增加
+    */
+    if ((moveLenX <= 0 && moveLenY <= 0) || (moveLenX >= 0 && moveLenY >= 0)) {
+      this.deg = this.deg + (roteMove - roteCache) / 2
+    } else {
+      this.deg = this.deg + (roteCache - roteMove) / 2
+    }
+  }
+  watch = {}
+}
+</script>
