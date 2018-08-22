@@ -12,7 +12,7 @@ import wepy from 'wepy'
 import cax from '../components/cax/index.js'
 export default class text extends wepy.page {
   config = {
-    navigationBarTitleText: '',
+    navigationBarTitleText: 'cax',
     usingComponents: {
       cax: '../components/cax/cax'
     }
